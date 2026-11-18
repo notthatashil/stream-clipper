@@ -1,0 +1,66 @@
+name: Make clip
+
+on:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: "Stream or VOD link"
+        required: true
+      length:
+        description: "Clip length in seconds"
+        default: "30"
+      count:
+        description: "How many clips"
+        default: "1"
+      record_minutes:
+        description: "If the stream is live: minutes to record before picking the best part"
+        default: "20"
+      framing:
+        description: "blur = full frame on blurred background, crop = fill the screen"
+        type: choice
+        default: blur
+        options:
+          - blur
+          - crop
+
+jobs:
+  clip:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install ffmpeg
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg fonts-dejavu-core
+
+      - name: Install Python packages
+        run: pip install -r requirements.txt
+
+      - name: Optional YouTube cookies
+        env:
+          YT_COOKIES: ${{ secrets.YT_COOKIES }}
+        run: |
+          if [ -n "$YT_COOKIES" ]; then printf '%s\n' "$YT_COOKIES" > cookies.txt; fi
+
+      - name: Make clips
+        env:
+          URL: ${{ inputs.url }}
+          LENGTH: ${{ inputs.length }}
+          COUNT: ${{ inputs.count }}
+          REC: ${{ inputs.record_minutes }}
+          FRAMING: ${{ inputs.framing }}
+        run: |
+          python autoclip.py "$URL" \
+            --length "$LENGTH" --count "$COUNT" \
+            --record-minutes "$REC" --framing "$FRAMING"
+
+      - name: Upload clips
+        uses: actions/upload-artifact@v4
+        with:
+          name: clips
+          path: output/*.mp4
+          if-no-files-found: error
