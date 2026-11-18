@@ -26,9 +26,11 @@ def run(cmd, **kw):
     print("+", " ".join(str(c) for c in cmd), flush=True)
     return subprocess.run(cmd, check=True, **kw)
 
-
 def cookie_args():
-    return ["--cookies", str(COOKIES)] if COOKIES.exists() else []
+    args = ["--js-runtimes", "node"]
+    if COOKIES.exists():
+        args += ["--cookies", str(COOKIES)]
+    return args
 
 
 # ---------------------------------------------------------------- fetching
