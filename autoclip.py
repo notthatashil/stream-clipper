@@ -27,7 +27,7 @@ def run(cmd, **kw):
     return subprocess.run(cmd, check=True, **kw)
 
 def cookie_args():
-    args = ["--js-runtimes", "node"]
+    args = ["--js-runtimes", "node", "--remote-components", "ejs:github"]
     if COOKIES.exists():
         args += ["--cookies", str(COOKIES)]
     return args
